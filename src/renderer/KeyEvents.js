@@ -30,6 +30,10 @@ class KeyEvents {
     const listeners = this.upMap[event.key] || [];
     listeners.forEach(l => l(event));
   };
+
+  isPressed = key => {
+    return this.pressed.has(key);
+  };
 }
 
 export default KeyEvents;

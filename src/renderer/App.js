@@ -4,6 +4,7 @@ import styled from 'react-emotion';
 import { Box } from './baseComponents';
 import FilePicker from './FilePicker';
 import ImageContainer from './ImageContainer';
+import KeyEvents from './KeyEvents';
 import { load, save } from './peristentState';
 
 class App extends React.Component {
@@ -11,6 +12,19 @@ class App extends React.Component {
     activeFileIndex: load('active-file-index'),
     files: []
   };
+
+  keyEvents = new KeyEvents();
+
+  componentDidMount() {
+    document.addEventListener('keydown', this.keyEvents.keyDownListener);
+    document.addEventListener('keyup', this.keyEvents.keyUpListener);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.keyEvents.keyDownListener);
+    document.removeEventListener('keyup', this.keyEvents.keyUpListener);
+  }
+
   render() {
     return (
       <Box height="100%" display="flex">
@@ -24,6 +38,7 @@ class App extends React.Component {
         >
           <Section>
             <FilePicker
+              keyEvents={this.keyEvents}
               activeFileIndex={this.state.activeFileIndex}
               files={this.state.files}
               setActiveFileIndex={this.setActiveFileIndex}
@@ -32,7 +47,11 @@ class App extends React.Component {
           </Section>
         </Box>
         <Box flex="1 1 auto">
-          <ImageContainer file={this.state.files[this.state.activeFileIndex]} />
+          <ImageContainer
+            key={this.state.activeFileIndex}
+            keyEvents={this.keyEvents}
+            file={this.state.files[this.state.activeFileIndex]}
+          />
         </Box>
       </Box>
     );

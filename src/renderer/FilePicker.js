@@ -25,6 +25,20 @@ class FilePicker extends React.Component {
 
   componentDidMount() {
     this.refreshFiles();
+    this.removeListeners = [
+      this.props.keyEvents.addDownListener('ArrowDown', () =>
+        this.props.setActiveFileIndex(
+          Math.min(this.props.activeFileIndex + 1, this.props.files.length - 1)
+        )
+      ),
+      this.props.keyEvents.addDownListener('ArrowUp', () =>
+        this.props.setActiveFileIndex(Math.max(0, this.props.activeFileIndex - 1))
+      )
+    ];
+  }
+
+  componentWillUnmount() {
+    this.removeListeners.forEach(r => r());
   }
 
   render() {

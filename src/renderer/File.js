@@ -34,7 +34,10 @@ class File {
     try {
       const content = (await fs.readFile(this.getAnnotationPath())).toString('utf-8');
       this.currentState = {
-        annotations: content.split('\n').map(line => line.split(' ').map(x => parseInt(x)))
+        annotations: content
+          .split('\n')
+          .filter(line => line.length > 0)
+          .map(line => line.split(' ').map(x => parseInt(x)))
       };
     } catch (err) {
       this.currentState = {

@@ -27,8 +27,15 @@ class ImageContainer extends React.Component {
 
   componentDidMount() {
     document.addEventListener('mousemove', this.resetMouseOver);
+    this.removeKeyDown = this.props.keyEvents.addDownListener(' ', () => {
+      const nextIndex =
+        this.state.selectedIndex === null ? this.annotationCount - 1 : this.state.selectedIndex - 1;
+
+      this.setState({ selectedIndex: nextIndex });
+    });
   }
   componentWillUnmount() {
+    this.removeKeyDown();
     document.removeEventListener('mousemove', this.resetMouseOver);
   }
   render() {
@@ -71,37 +78,40 @@ class ImageContainer extends React.Component {
           </Text>
           <AnnotationList flex="1 1 auto" innerRef={this.handleAnnotationListRef}>
             <Subscribe to={this.props.file.getState()}>
-              {({ annotations }) => (
-                <>
-                  {annotations.map(([x, y], index) => {
-                    const selected = index === this.state.selectedIndex;
-                    const onClick = selected
-                      ? () => this.deleteAnnotation(index)
-                      : () => this.selectAnnotation(index);
-                    return (
-                      <ListItem key={index} selected={selected} onClick={onClick}>
-                        {x}:{y}
-                        {selected && <FontAwesomeIcon icon="trash-alt" />}
-                      </ListItem>
-                    );
-                  })}
-                  <ListItem
-                    color="#53605C"
-                    onClick={() => this.setState({ selectedIndex: Infinity })}
-                    selected={
-                      this.state.selectedIndex === null || !annotations[this.state.selectedIndex]
-                    }
-                  >
-                    {this.state.cursor ? (
-                      <>
-                        {this.state.cursor.x}:{this.state.cursor.y}
-                      </>
-                    ) : (
-                      <>?:?</>
-                    )}
-                  </ListItem>
-                </>
-              )}
+              {({ annotations }) => {
+                this.annotationCount = annotations.length;
+                return (
+                  <>
+                    {annotations.map(([x, y], index) => {
+                      const selected = index === this.state.selectedIndex;
+                      const onClick = selected
+                        ? () => this.deleteAnnotation(index)
+                        : () => this.selectAnnotation(index);
+                      return (
+                        <ListItem key={index} selected={selected} onClick={onClick}>
+                          {x}:{y}
+                          {selected && <FontAwesomeIcon icon="trash-alt" />}
+                        </ListItem>
+                      );
+                    })}
+                    <ListItem
+                      color="#53605C"
+                      onClick={() => this.setState({ selectedIndex: Infinity })}
+                      selected={
+                        this.state.selectedIndex === null || !annotations[this.state.selectedIndex]
+                      }
+                    >
+                      {this.state.cursor ? (
+                        <>
+                          {this.state.cursor.x}:{this.state.cursor.y}
+                        </>
+                      ) : (
+                        <>?:?</>
+                      )}
+                    </ListItem>
+                  </>
+                );
+              }}
             </Subscribe>
           </AnnotationList>
         </Box>

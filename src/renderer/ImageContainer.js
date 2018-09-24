@@ -18,7 +18,7 @@ class ImageContainer extends React.Component {
     cursor: null,
     selectedIndex: null,
     scale: 2,
-    origin: '50 50'
+    offset: { x: 0, y: 0 }
   };
 
   componentDidUpdate() {
@@ -32,9 +32,15 @@ class ImageContainer extends React.Component {
 
   componentDidMount() {
     document.addEventListener('mousemove', this.resetMouseOver);
-    this.removeKeyDown = [
+    this.removeKeyListeners = [
       this.props.keyEvents.addDownListener('Alt', () => {
-        this.setState({ scaleActive: !this.state.scaleActive });
+        this.setState({ scaleActive: true });
+        if (!this.canvas) return;
+        this.canvas.requestPointerLock();
+      }),
+      this.props.keyEvents.addUpListener('Alt', () => {
+        this.setState({ scaleActive: false, offset: { x: 0, y: 0 } });
+        document.exitPointerLock();
       }),
       this.props.keyEvents.addDownListener(' ', () => {
         const nextIndex =
@@ -47,7 +53,7 @@ class ImageContainer extends React.Component {
     ];
   }
   componentWillUnmount() {
-    this.removeKeyDown.forEach(r => r());
+    this.removeKeyListeners.forEach(r => r());
     document.removeEventListener('mousemove', this.resetMouseOver);
   }
   render() {
@@ -75,26 +81,29 @@ class ImageContainer extends React.Component {
                           };
                           const ratio = useHeight ? heightRatio : widthRatio;
                           return (
-                            <TranslatedBox
-                              height={height}
-                              width={width}
-                              scale={this.state.scaleActive ? this.state.scale : 1}
-                              origin={this.state.origin}
-                            >
+                            <>
                               <Canvas
                                 height={height}
                                 width={width}
                                 innerRef={this.paintAnnotations(annotations, ratio)}
+                                onMouseMove={this.handleCanvasMouseMove}
                               />
-                              <Img
-                                style={style}
-                                src={this.props.file.absolutePath}
-                                onMouseDown={preventDefault}
-                                onMouseMove={this.getMouseOver(ratio)}
-                                onClick={this.getOnClick(ratio)}
-                                onWheel={this.handleWheel}
-                              />
-                            </TranslatedBox>
+                              <TranslatedBox
+                                height={height}
+                                width={width}
+                                offset={this.state.offset}
+                                scale={this.state.scaleActive ? this.state.scale : 1}
+                              >
+                                <Img
+                                  style={style}
+                                  src={this.props.file.absolutePath}
+                                  onMouseDown={preventDefault}
+                                  onMouseMove={this.getMouseOver(ratio)}
+                                  onClick={this.getOnClick(ratio)}
+                                  onWheel={this.handleWheel}
+                                />
+                              </TranslatedBox>
+                            </>
                           );
                         }}
                       </AutoSizer>
@@ -154,6 +163,14 @@ class ImageContainer extends React.Component {
     });
   });
 
+  handleCanvasMouseMove = event => {
+    const dx = event.movementX;
+    const dy = event.movementY;
+    this.setState(({ offset }) => ({
+      offset: { x: offset.x - dx, y: offset.y - dy }
+    }));
+  };
+
   handleWheel = event => {
     const up = event.deltaY < 0;
     this.setState({ scale: Math.max(0.25, this.state.scale + 0.25 * (up ? 1 : -1)) });
@@ -177,12 +194,15 @@ class ImageContainer extends React.Component {
   };
 
   paintAnnotations = (annotations, ratio) => canvas => {
+    this.canvas = canvas;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    const scale = this.state.scaleActive ? this.state.scale : 1;
+    ctx.scale(scale, scale);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 / scale;
 
     annotations.forEach(([x, y], index) => {
       if (index === this.state.selectedIndex) {
@@ -191,10 +211,11 @@ class ImageContainer extends React.Component {
         ctx.fillStyle = 'red';
       }
       ctx.beginPath();
-      ctx.arc(x / ratio, y / ratio, 3, 0, 2 * Math.PI);
+      ctx.arc(x / ratio, y / ratio, 3 / scale, 0, 2 * Math.PI);
       ctx.stroke();
       ctx.fill();
     });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   };
 
   selectAnnotation = index => this.setState({ selectedIndex: index });
@@ -243,10 +264,12 @@ const Img = styled.img`
 const Canvas = styled(Box)`
   position: absolute;
   pointer-events: none;
+  z-index: 1;
 `.withComponent('canvas');
 
 const TranslatedBox = styled(Box)`
-  transition: transform 0.2s;
-  transform: scale(${props => props.scale});
-  transform-origin: ${props => props.origin};
+  /* transition: transform 0.2s; */
+  transform: translate3d(${props => props.offset.x}px, ${props => props.offset.y}px, 0)
+    scale(${props => props.scale});
+  transform-origin: 0 0;
 `;

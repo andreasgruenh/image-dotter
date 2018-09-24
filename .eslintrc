@@ -7,11 +7,15 @@
     },
     "sourceType": "module"
   },
+  "plugins": ["react"],
   "rules": {
-    "no-undef": "error"
+    "no-undef": "error",
+    "react/no-typos": "error",
+    "react/jsx-no-undef": "error"
   },
   "env": {
     "browser": true,
+    "es6": true,
     "node": true
   }
 }

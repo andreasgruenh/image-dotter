@@ -1,4 +1,6 @@
+import sizeOf from 'buffer-image-size';
 import { remote } from 'electron';
+import produce from 'immer';
 import { basename, join, parse } from 'path';
 import { ReplaySubject } from 'rxjs';
 
@@ -18,7 +20,7 @@ class File {
   };
 
   stateInitialized = false;
-  state$ = new ReplaySubject();
+  state$ = new ReplaySubject(1);
 
   getState = () => {
     if (!this.stateInitialized) {
@@ -30,11 +32,59 @@ class File {
 
   readAnnotationFile = async () => {
     try {
-      const content = await fs.readFile(this.getAnnotationPath());
-      this.state$.next({ annotations: content.split('\n') });
+      const content = (await fs.readFile(this.getAnnotationPath())).toString('utf-8');
+      this.currentState = {
+        annotations: content.split('\n').map(line => line.split(' ').map(x => parseInt(x)))
+      };
     } catch (err) {
-      this.state$.next({ annotations: 0 });
+      this.currentState = {
+        annotations: []
+      };
     }
+    this.state$.next(this.currentState);
+  };
+
+  imageData = null;
+  getImageData = () => {
+    if (!this.imageData) {
+      this.imageData = new Promise(async resolve => {
+        const buffer = await fs.readFile(this.absolutePath);
+        resolve({
+          buffer,
+          dimensions: sizeOf(buffer)
+        });
+      });
+    }
+    return this.imageData;
+  };
+
+  addAnnotation = (x, y) => {
+    this.currentState = produce(this.currentState, state => {
+      state.annotations.push([x, y]);
+    });
+    this.state$.next(this.currentState);
+    this.saveState();
+  };
+
+  updateAnnotation = (index, x, y) => {
+    this.currentState = produce(this.currentState, state => {
+      state.annotations[index] = [x, y];
+    });
+    this.state$.next(this.currentState);
+    this.saveState();
+  };
+
+  deleteAnnotation = index => {
+    this.currentState = produce(this.currentState, state => {
+      state.annotations.splice(index, 1);
+    });
+    this.state$.next(this.currentState);
+    this.saveState();
+  };
+
+  saveState = async () => {
+    const string = this.currentState.annotations.map(row => row.join(' ')).join('\n');
+    await fs.writeFile(this.getAnnotationPath(), string);
   };
 }
 

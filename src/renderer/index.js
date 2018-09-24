@@ -1,3 +1,5 @@
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import { render } from 'react-dom';
 
@@ -10,3 +12,4 @@ document.body.appendChild(reactContainer);
 render(<App />, reactContainer);
 
 addGlobalStyles();
+library.add(fas);

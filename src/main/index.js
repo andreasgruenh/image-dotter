@@ -7,7 +7,7 @@ let mainWindow;
 
 function createWindow() {
   const mainWindowState = windowStateKeeper();
-  mainWindow = new BrowserWindow(mainWindowState);
+  mainWindow = new BrowserWindow({ ...mainWindowState, webPreferences: { webSecurity: false } });
   mainWindow.setMenuBarVisibility(false);
   mainWindowState.manage(mainWindow);
 

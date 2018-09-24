@@ -1,5 +1,5 @@
 import { remote } from 'electron';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { array, func, number } from 'prop-types';
 import React from 'react';
 import styled from 'react-emotion';
@@ -30,7 +30,9 @@ class FilePicker extends React.Component {
   render() {
     return (
       <Box flex="1 1 auto" display="flex" flexDirection="column" height="100%">
-        <Text flex="0 0 auto">Files</Text>
+        <Text flex="0 0 auto" mb={2}>
+          Files
+        </Text>
         <PickerBox flex="1 1 200px" bg="#53605C" as="ul" py="2">
           {this.props.files.map((file, index) => (
             <ListItem
@@ -39,11 +41,11 @@ class FilePicker extends React.Component {
               onClick={() => this.props.setActiveFileIndex(index)}
             >
               <Box>{file.fileName}</Box>
-              <Subscribe to={file.getState()}>{({ annotations }) => annotations}</Subscribe>
+              <Subscribe to={file.getState()}>{({ annotations }) => annotations.length}</Subscribe>
             </ListItem>
           ))}
         </PickerBox>
-        <Box flex="0 0 auto" display="flex" justifyContent="space-between">
+        <Box flex="0 0 auto" display="flex" justifyContent="space-between" pt={2}>
           <button onClick={this.selectDirectory}>Select directory</button>
           <button onClick={this.refreshFiles}>Refresh</button>
         </Box>
@@ -69,6 +71,7 @@ class FilePicker extends React.Component {
     if (!files) return;
 
     const fileInstances = files
+      .filter(relativePath => extname(relativePath) !== '.txt')
       .map(relativePath => join(directory, relativePath))
       .map(absolutePath => new File(absolutePath));
 
@@ -88,6 +91,7 @@ const PickerBox = styled(Box)`
 
 const ListItem = styled(Box)`
   align-items: center;
+  cursor: pointer;
   display: flex;
   background: ${props => (props.selected ? '#293436' : 'transparent')};
 

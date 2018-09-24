@@ -3,6 +3,7 @@ import styled from 'react-emotion';
 
 import { Box } from './baseComponents';
 import FilePicker from './FilePicker';
+import ImageContainer from './ImageContainer';
 import { load, save } from './peristentState';
 
 class App extends React.Component {
@@ -30,7 +31,9 @@ class App extends React.Component {
             />
           </Section>
         </Box>
-        <Box flex="1 1 auto">Content</Box>
+        <Box flex="1 1 auto">
+          <ImageContainer file={this.state.files[this.state.activeFileIndex]} />
+        </Box>
       </Box>
     );
   }

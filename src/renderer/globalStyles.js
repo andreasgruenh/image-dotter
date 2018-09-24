@@ -10,6 +10,7 @@ function addGlobalStyles() {
     html {
       font-family: Tahoma;
       font-size: 16px;
+      user-select: none;
     }
 
     body {

@@ -8,6 +8,7 @@ let mainWindow;
 function createWindow() {
   const mainWindowState = windowStateKeeper();
   mainWindow = new BrowserWindow(mainWindowState);
+  mainWindow.setMenuBarVisibility(false);
   mainWindowState.manage(mainWindow);
 
   mainWindow.loadURL('http://localhost:3000');

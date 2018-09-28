@@ -6,7 +6,8 @@ import { Subscribe } from 'resubscribe';
 import AnnotationList from './AnnotationList';
 import { Box, Text } from './baseComponents';
 import File from './File';
-import NoZoomImageAnnotater from './NoZoomImageAnnotater';
+import ImageAnnotater from './ImageAnnotater';
+import ImageAnnotaterWithZoom from './ImageAnnotaterWithZoom';
 
 class ImageContainer extends React.Component {
   static propTypes = {
@@ -16,7 +17,7 @@ class ImageContainer extends React.Component {
     scaleActive: false,
     cursor: null,
     selectedAnnotationIndex: null,
-    scale: 2
+    scale: 1
   };
 
   componentDidMount() {
@@ -48,20 +49,37 @@ class ImageContainer extends React.Component {
                   <Subscribe to={this.props.file.getImageData()}>
                     {({ buffer, dimensions }) => (
                       <AutoSizer>
-                        {availableDimensions => (
-                          <NoZoomImageAnnotater
-                            addAnnotation={this.addAnnotation}
-                            annotations={annotations}
-                            availableDimensions={availableDimensions}
-                            cursor={this.state.cursor}
-                            deleteAnnotation={this.deleteAnnotation}
-                            fileDimensions={dimensions}
-                            filePath={this.props.file.absolutePath}
-                            selectedAnnoationIndex={this.state.selectedAnnotationIndex}
-                            setCursor={this.setCursor}
-                            updateAnnotation={this.updateAnnotation}
-                          />
-                        )}
+                        {availableDimensions =>
+                          this.state.scaleActive ? (
+                            <ImageAnnotaterWithZoom
+                              addAnnotation={this.addAnnotation}
+                              annotations={annotations}
+                              availableDimensions={availableDimensions}
+                              cursor={this.state.cursor}
+                              deleteAnnotation={this.deleteAnnotation}
+                              fileDimensions={dimensions}
+                              filePath={this.props.file.absolutePath}
+                              scale={this.state.scale}
+                              selectedAnnoationIndex={this.state.selectedAnnotationIndex}
+                              setCursor={this.setCursor}
+                              setScale={this.setScale}
+                              updateAnnotation={this.updateAnnotation}
+                            />
+                          ) : (
+                            <ImageAnnotater
+                              addAnnotation={this.addAnnotation}
+                              annotations={annotations}
+                              availableDimensions={availableDimensions}
+                              cursor={this.state.cursor}
+                              deleteAnnotation={this.deleteAnnotation}
+                              fileDimensions={dimensions}
+                              filePath={this.props.file.absolutePath}
+                              selectedAnnoationIndex={this.state.selectedAnnotationIndex}
+                              setCursor={this.setCursor}
+                              updateAnnotation={this.updateAnnotation}
+                            />
+                          )
+                        }
                       </AutoSizer>
                     )}
                   </Subscribe>
@@ -86,6 +104,8 @@ class ImageContainer extends React.Component {
       </Subscribe>
     );
   }
+
+  setScale = scale => this.setState({ scale });
 
   setCursor = cursor => this.setState({ cursor });
   selectAnnotation = index => this.setState({ selectedAnnotationIndex: index });

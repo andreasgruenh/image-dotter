@@ -5,7 +5,7 @@ import styled from 'react-emotion';
 
 import { Box } from './baseComponents';
 
-class NoZoomImageAnnotater extends React.Component {
+class ImageAnnotater extends React.Component {
   static propTypes = {
     addAnnotation: func.isRequired,
     annotations: arrayOf(arrayOf(number)).isRequired,
@@ -119,4 +119,4 @@ const Canvas = styled(Box)`
   z-index: 1;
 `.withComponent('canvas');
 
-export default NoZoomImageAnnotater;
+export default ImageAnnotater;

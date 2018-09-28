@@ -85,7 +85,10 @@ class FilePicker extends React.Component {
     if (!files) return;
 
     const fileInstances = files
-      .filter(relativePath => extname(relativePath) !== '.txt')
+      .filter(relativePath => {
+        const lowerExt = extname(relativePath).toLowerCase();
+        return lowerExt === '.png' || lowerExt === '.jpg' || lowerExt === '.jpeg';
+      })
       .map(relativePath => join(directory, relativePath))
       .map(absolutePath => new File(absolutePath));
 

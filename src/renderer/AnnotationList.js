@@ -30,17 +30,18 @@ class AnnotationList extends React.Component {
   }
 
   componentDidMount() {
-    this.removeKeyListeners = [
-      this.props.keyEvents.addDownListener(' ', () => {
-        console.log(this.props.annotations.length);
-        const nextIndex =
-          this.props.selectedAnnotationIndex === null
-            ? this.props.annotations.length - 1
-            : this.props.selectedAnnotationIndex - 1;
+    const selectPrevious = () => {
+      const nextIndex =
+        this.props.selectedAnnotationIndex === null
+          ? this.props.annotations.length - 1
+          : this.props.selectedAnnotationIndex - 1;
 
-        if (nextIndex < 0) return;
-        this.props.selectAnnotation(nextIndex);
-      })
+      if (nextIndex < 0) return;
+      this.props.selectAnnotation(nextIndex);
+    };
+    this.removeKeyListeners = [
+      this.props.keyEvents.addDownListener(' ', selectPrevious),
+      this.props.keyEvents.addDownListener('c', selectPrevious)
     ];
   }
   componentWillUnmount() {

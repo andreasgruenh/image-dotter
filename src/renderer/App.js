@@ -48,7 +48,6 @@ class App extends React.Component {
         </Box>
         <Box flex="1 1 auto">
           <ImageContainer
-            key={this.state.activeFileIndex}
             keyEvents={this.keyEvents}
             file={this.state.files[this.state.activeFileIndex]}
           />

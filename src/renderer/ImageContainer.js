@@ -8,9 +8,11 @@ import { Box, Text } from './baseComponents';
 import File from './File';
 import ImageAnnotater from './ImageAnnotater';
 import ImageAnnotaterWithZoom from './ImageAnnotaterWithZoom';
+import KeyEvents from './KeyEvents';
 
 class ImageContainer extends React.Component {
   static propTypes = {
+    keyEvents: instanceOf(KeyEvents),
     file: instanceOf(File)
   };
   state = {
@@ -29,6 +31,11 @@ class ImageContainer extends React.Component {
         this.setState({ scaleActive: false });
       })
     ];
+  }
+  componentDidUpdate(lastProps) {
+    if (this.props.file !== lastProps.file) {
+      this.setState({ selectedAnnoationIndex: null, cursor: null });
+    }
   }
   componentWillUnmount() {
     this.removeKeyListeners.forEach(r => r());

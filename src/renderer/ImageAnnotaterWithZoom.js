@@ -5,7 +5,7 @@ import styled from 'react-emotion';
 
 import { Box } from './baseComponents';
 
-class ImageAnnotaterWithZoom extends React.Component {
+class ImageAnnotaterWithZoom extends React.PureComponent {
   static propTypes = {
     addAnnotation: func.isRequired,
     annotations: arrayOf(arrayOf(number)).isRequired,
@@ -27,11 +27,30 @@ class ImageAnnotaterWithZoom extends React.Component {
   };
 
   box = React.createRef();
+  img = React.createRef();
+  canvas = React.createRef();
+
+  constructor(props) {
+    super(props);
+    if (this.props.cursor) {
+      const { x: cx, y: cy } = this.props.cursor;
+      const { x: mx, y: my } = this.getMidpoint();
+      this.x = cx * this.props.scale - mx;
+      this.y = cy * this.props.scale - my;
+    } else {
+      this.x = 0;
+      this.y = 0;
+    }
+  }
 
   componentDidMount() {
-    Object.assign(this, this.props.cursor || { x: 0, y: 0 });
     if (!this.box.current) return;
     this.box.current.requestPointerLock();
+    this.paintAnnotations(this.props.annotations, this.props.scale);
+  }
+
+  componentDidUpdate() {
+    this.paintAnnotations(this.props.annotations, this.props.scale);
   }
 
   componentWillUnmount() {
@@ -41,58 +60,122 @@ class ImageAnnotaterWithZoom extends React.Component {
 
   render() {
     const {
+      annotations,
       availableDimensions,
       fileDimensions,
       scale: scaleFactor,
-      filePath,
-      cursor
+      filePath
     } = this.props;
     const scaledFileDimensions = scale(fileDimensions, scaleFactor);
     const roundedAvailableDimensions = scale(availableDimensions, 1);
-    const translation = cursor || { x: 0, y: 0 };
-    console.log(cursor);
+    const translation = { x: this.x, y: this.y };
     return (
       <Box
         innerRef={this.box}
         onWheel={this.handleWheel}
         onMouseMove={this.handleMouseMove}
+        onClick={this.handleClick}
         {...roundedAvailableDimensions}
         position="relative"
         className={css`
           overflow: hidden;
         `}
       >
+        <img
+          ref={this.img}
+          style={{ transform: `translate3d(${-translation.x}px, ${-translation.y}px, 0px)` }}
+          src={filePath}
+          {...scaledFileDimensions}
+        />
+        <Canvas
+          {...scaledFileDimensions}
+          style={{ transform: `translate3d(${-translation.x}px, ${-translation.y}px, 0px)` }}
+          innerRef={this.canvas}
+        />
         <CrossHair
           totalWidth={roundedAvailableDimensions.width}
           totalHeight={roundedAvailableDimensions.height}
-        />
-        <img
-          className={css`
-            transform: translate3d(${-translation.x}px, ${-translation.y}px, 0px);
-          `}
-          src={filePath}
-          {...scaledFileDimensions}
         />
       </Box>
     );
   }
 
+  getMidpoint() {
+    return {
+      x: Math.floor(this.props.availableDimensions.width / 2),
+      y: Math.floor(this.props.availableDimensions.height / 2)
+    };
+  }
+
+  getCursorLocation(scale = this.props.scale) {
+    const { x: mx, y: my } = this.getMidpoint();
+    const cursor = {
+      x: Math.round((this.x + mx) / scale),
+      y: Math.round((this.y + my) / scale)
+    };
+    return cursor;
+  }
+
+  paintAnnotations = (annotations, scale) => {
+    const canvas = this.canvas.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'black';
+
+    annotations.forEach(([x, y], index) => {
+      if (index === this.props.selectedAnnoationIndex) {
+        ctx.fillStyle = 'lime';
+      } else {
+        ctx.fillStyle = 'red';
+      }
+      ctx.beginPath();
+      ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.fill();
+    });
+  };
+
+  handleClick = event => {
+    if (!this.props.cursor) return;
+    const { x, y } = this.props.cursor;
+    if (this.props.selectedAnnoationIndex !== null) {
+      this.props.updateAnnotation(this.props.selectedAnnoationIndex, x, y);
+    } else {
+      this.props.addAnnotation(x, y);
+    }
+  };
+
   handleMouseMove = event => {
     this.x += event.movementX;
     this.y += event.movementY;
-    this.props.setCursor({ x: this.x, y: this.y });
-  };
-
-  coordinatesFromEvent = (ratio, event) => {
-    const x = Math.round(event.nativeEvent.offsetX * ratio);
-    const y = Math.round(event.nativeEvent.offsetY * ratio);
-    return { x, y };
+    this.img.current.style.transform = `translate3d(${-this.x}px, ${-this.y}px, 0px)`;
+    this.canvas.current.style.transform = `translate3d(${-this.x}px, ${-this.y}px, 0px)`;
+    this.paintAnnotations(this.props.annotations, this.props.scale);
+    const newCursor = this.getCursorLocation();
+    if (
+      newCursor.x > this.props.fileDimensions.width ||
+      newCursor.x < 0 ||
+      newCursor.y > this.props.fileDimensions.height ||
+      newCursor.y < 0
+    ) {
+      this.props.setCursor(null);
+    } else {
+      this.props.setCursor(newCursor);
+    }
   };
 
   handleWheel = event => {
     const up = event.deltaY < 0;
-    const newScale = this.props.scale + 0.25 * (up ? 1 : -1);
-    this.props.setScale(Math.max(0.25, newScale));
+    const factor = up ? 1.25 : 1 / 1.25;
+    const newScale = Math.max(0.25, this.props.scale * factor);
+    const cursor = this.getCursorLocation();
+    const { x: cx, y: cy } = cursor;
+    const { x: mx, y: my } = this.getMidpoint();
+    this.x = cx * newScale - mx;
+    this.y = cy * newScale - my;
+    this.props.setScale(newScale);
   };
 }
 
@@ -121,10 +204,18 @@ const CrossHair = styled.div`
     border: 1px solid rgba(255, 255, 255, 0.7);
     content: ' ';
     height: ${width}px;
-    left: ${props => Math.floor(props.totalWidth / 2)}px;
+    left: ${props => Math.floor(props.totalWidth / 2) - size / 2}px;
     position: absolute;
     top: ${props => Math.floor(props.totalHeight / 2)}px;
     width: ${size}px;
     z-index: 1;
   }
 `;
+
+const Canvas = styled(Box)`
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  top: 0;
+  left: 0;
+`.withComponent('canvas');

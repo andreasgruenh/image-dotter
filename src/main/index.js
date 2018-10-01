@@ -13,7 +13,9 @@ function createWindow() {
 
   mainWindow.loadURL('http://localhost:3000');
 
-  mainWindow.webContents.openDevTools();
+  if (process.env.NODE_ENV !== 'production') {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.on('closed', function() {
     mainWindow = null;

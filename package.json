@@ -9,7 +9,10 @@
   "scripts": {
     "watch": "run-p watch-*",
     "watch-renderer": "webpack-dev-server --watch --config src/renderer/webpack.config.js",
-    "watch-backend": "webpack --watch --config src/main/webpack.config.js"
+    "watch-backend": "webpack --watch --config src/main/webpack.config.js",
+    "start": "run-p start-*",
+    "start-renderer": "webpack-dev-server -p --watch --config src/renderer/webpack.config.js",
+    "start-backend": "webpack -p --watch --config src/main/webpack.config.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.1.0",

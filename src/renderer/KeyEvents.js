@@ -20,7 +20,9 @@ class KeyEvents {
   keyDownListener = event => {
     if (this.pressed.has(event.key)) return;
     this.pressed.add(event.key);
-    console.log(event.key);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(event.key);
+    }
     const listeners = this.downMap[event.key] || [];
     listeners.forEach(l => l(event));
   };

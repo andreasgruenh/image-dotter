@@ -59,13 +59,7 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
   }
 
   render() {
-    const {
-      annotations,
-      availableDimensions,
-      fileDimensions,
-      scale: scaleFactor,
-      filePath
-    } = this.props;
+    const { availableDimensions, fileDimensions, scale: scaleFactor, filePath } = this.props;
     const scaledFileDimensions = scale(fileDimensions, scaleFactor);
     const roundedAvailableDimensions = scale(availableDimensions, 1);
     const translation = { x: this.x, y: this.y };
@@ -82,16 +76,15 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
         `}
       >
         <img
+          className={css`
+            image-rendering: pixelated;
+          `}
           ref={this.img}
           style={{ transform: `translate3d(${-translation.x}px, ${-translation.y}px, 0px)` }}
           src={filePath}
           {...scaledFileDimensions}
         />
-        <Canvas
-          {...scaledFileDimensions}
-          style={{ transform: `translate3d(${-translation.x}px, ${-translation.y}px, 0px)` }}
-          innerRef={this.canvas}
-        />
+        <Canvas {...roundedAvailableDimensions} innerRef={this.canvas} />
         <CrossHair
           totalWidth={roundedAvailableDimensions.width}
           totalHeight={roundedAvailableDimensions.height}
@@ -110,8 +103,8 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
   getCursorLocation(scale = this.props.scale) {
     const { x: mx, y: my } = this.getMidpoint();
     const cursor = {
-      x: Math.round((this.x + mx) / scale),
-      y: Math.round((this.y + my) / scale)
+      x: Math.floor((this.x + mx) / scale),
+      y: Math.floor((this.y + my) / scale)
     };
     return cursor;
   }
@@ -131,7 +124,7 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
         ctx.fillStyle = 'red';
       }
       ctx.beginPath();
-      ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
+      ctx.arc(x * scale - this.x + scale / 2, y * scale - this.y + scale / 2, 3, 0, 2 * Math.PI);
       ctx.stroke();
       ctx.fill();
     });
@@ -151,7 +144,6 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
     this.x += event.movementX;
     this.y += event.movementY;
     this.img.current.style.transform = `translate3d(${-this.x}px, ${-this.y}px, 0px)`;
-    this.canvas.current.style.transform = `translate3d(${-this.x}px, ${-this.y}px, 0px)`;
     this.paintAnnotations(this.props.annotations, this.props.scale);
     const newCursor = this.getCursorLocation();
     if (

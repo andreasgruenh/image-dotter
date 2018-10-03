@@ -131,8 +131,8 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
   };
 
   handleClick = event => {
-    if (!this.props.cursor) return;
-    const { x, y } = this.props.cursor;
+    if (!this.cursor) return;
+    const { x, y } = this.cursor;
     if (this.props.selectedAnnoationIndex !== null) {
       this.props.updateAnnotation(this.props.selectedAnnoationIndex, x, y);
     } else {
@@ -152,9 +152,9 @@ class ImageAnnotaterWithZoom extends React.PureComponent {
       newCursor.y > this.props.fileDimensions.height ||
       newCursor.y < 0
     ) {
-      this.props.setCursor(null);
+      this.cursor = null;
     } else {
-      this.props.setCursor(newCursor);
+      this.cursor = newCursor;
     }
   };
 
